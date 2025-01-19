@@ -118,7 +118,7 @@ class RecommendationGenerator(Workflow):
                           "Search for skills (human related or technical), methodologies and technologies (including tools), etc."
                           "Ensure the keywords are related to the description of the role itself and not about the company or about the benefits. ",
                           "The result should be a list of keywords in the response model format."],
-            response_model=ListKeywords, markdown=True))
+            response_model=ListKeywords, markdown=True)
     
 
     extractor: Agent = Agent(model=MODEL_GROQ,
