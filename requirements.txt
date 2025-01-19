@@ -1,0 +1,6 @@
+streamlit
+pypdf
+phi
+duckduckgo-search
+openai
+google-generativeai
