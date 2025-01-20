@@ -162,7 +162,7 @@ class RecommendationGenerator(Workflow):
                     expected_output="The result should be in a beautiful structured content in Markdown but without the marks ```markdown.",
                     markdown=True)
 
-    final_recommender: Agent = Agent(model=MODEL_GEMINI,
+    improved_resume: Agent = Agent(model=MODEL_GEMINI,
                 description="You are a famous HR analyst. You are very good at suggesting improvements to resumes based on a list of keywords and best practices for resume writing.",
                 instructions=["Given the recommended alternatives, integrate the best nuances and give a final improved resume so the person could share it as it is.",
                     "Your result should always be in the same language of the resume"], 
@@ -286,10 +286,10 @@ class RecommendationGenerator(Workflow):
         # Step 6: Generating Improved Resume
         
         logger_manager.log("✍️ Generating improved resume")
-        recommender_input = {
+        improved_resume_input = {
             "recommendation": recommendation.content
         }
-        improved_resume: RunResponse = self.improved_resume.run(json.dumps(recommender_input, indent=4), stream=False, markdown=True)
+        improved_resume: RunResponse = self.improved_resume.run(json.dumps(improved_resume_input, indent=4), stream=False, markdown=True)
         
         logger_manager.log("✅ Generating recommendation: DONE")
         # return recommendation
