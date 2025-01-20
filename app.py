@@ -432,7 +432,7 @@ if st.session_state.get('run_evaluation', False):
             """)
 
         pdf = MarkdownPdf(toc_level=0)
-        pdf.add_section(Section(markdown_resume_text), paper_size="A4-L")
+        pdf.add_section(Section(markdown_resume_text, paper_size="A4-L"))
         pdf.meta["title"] = f"Resume - {profession}"
         
         timestamp = str(int(time.time()))
