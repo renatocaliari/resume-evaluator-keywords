@@ -170,7 +170,6 @@ class RecommendationGenerator(Workflow):
                     expected_output="The result should be in a beautiful structured resume in Markdown but without starting with the marks ```markdown or other marks",
                     markdown=True)
 
-    @st.cache_data
     def run(self, profession: str, curriculum_vitae_file_name: str, curriculum_vitae_content: str, link_job_offer: str = None, qty: int = 1, use_cache: bool = True) -> RunResponse:
         logger_manager.log(f"🚀 Getting the last job offers and generating recommendations: {profession}")
         sorted_keywords = None
@@ -336,7 +335,7 @@ with st.sidebar:
     
 
     # Checkbox to force new job search
-    search_new_jobs = True 
+    search_new_jobs = False 
     # st.checkbox("Use cached keywords", value=True, 
         # help="If checked, use the cached keywords from job board vacancies instead of searching again. If you're conducting an evaluation for this profession for the first time, a new search will be carried out.",)
     
