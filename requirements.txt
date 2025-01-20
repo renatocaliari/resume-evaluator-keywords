@@ -7,8 +7,5 @@ google-generativeai
 sqlalchemy
 python-jobspy==1.1.75
 python-dotenv
-groq
-huggingface_hub
-mistralai
 jina
 markdown-pdf

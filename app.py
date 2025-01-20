@@ -13,11 +13,11 @@ from phi.workflow import Workflow, RunResponse, RunEvent
 from phi.tools.jina_tools import JinaReaderTools
 from phi.agent import Agent
 from phi.model.google import Gemini
-from phi.model.groq import Groq
-from phi.model.huggingface import HuggingFaceChat
-from phi.model.deepseek import DeepSeekChat
-from phi.model.openrouter import OpenRouter
-from phi.model.mistral import MistralChat
+# from phi.model.groq import Groq
+# from phi.model.huggingface import HuggingFaceChat
+# from phi.model.deepseek import DeepSeekChat
+# from phi.model.openrouter import OpenRouter
+# from phi.model.mistral import MistralChat
 from phi.storage.workflow.sqlite import SqlWorkflowStorage
 from phi.utils.log import logger
 from phi.utils.pprint import pprint_run_response
@@ -30,7 +30,7 @@ import json
 load_dotenv()
 # Model definitions (Gemini and Groq are used in this example)
 MODEL_GEMINI: Gemini = Gemini(id="gemini-2.0-flash-exp", api_key=os.getenv("GEMINI_API_KEY"))
-MODEL_GROQ: Groq = Groq(id="llama-3.1-8b-instant", api_key=os.getenv("GROQ_API_KEY"))
+# MODEL_GROQ: Groq = Groq(id="llama-3.1-8b-instant", api_key=os.getenv("GROQ_API_KEY"))
 JINA_API_KEY=os.getenv("JINA_API_KEY")
 
 class LoggerManager:
@@ -317,13 +317,11 @@ with st.sidebar:
     MODEL_GEMINI: Gemini = Gemini(id="gemini-2.0-flash-exp", api_key=api_key)
 
     profession = st.text_input("For which profession do you want to refine your resume?", key="profession_input")
-    qty = st.number_input("Max vacancies to search in each platform", min_value=1, max_value=10, value=5, step=1)
+    qty = st.number_input("Max vacancies to search in each platform", min_value=1, max_value=10, value=5, step=1, label_visibility="visible")
     
     curriculo_pdf = st.file_uploader("Upload your resume in PDF format", type=["pdf"], key="curriculo_pdf_input")
     curriculo_file_name = ""
     curriculo_conteudo = ""
-    
-
 
     pdf_status_placeholder = st.empty()
 
