@@ -170,6 +170,7 @@ class RecommendationGenerator(Workflow):
                     expected_output="The result should be in a beautiful structured resume in Markdown but without starting with the marks ```markdown or other marks",
                     markdown=True)
 
+    @st.cache_data
     def run(self, profession: str, curriculum_vitae_file_name: str, curriculum_vitae_content: str, link_job_offer: str = None, qty: int = 1, use_cache: bool = True) -> RunResponse:
         logger_manager.log(f"🚀 Getting the last job offers and generating recommendations: {profession}")
         sorted_keywords = None
@@ -447,6 +448,6 @@ if st.session_state.get('run_evaluation', False):
         pdf.save(pdf_file_name)
 
         with open(pdf_file_name, 'rb') as f:
-           st.download_button('Download the new resume', f, file_name=pdf_file_name) 
+           st.download_button('Download the new resume (your )', f, file_name=pdf_file_name, type="primary", icon="⬇️") 
 
         st.markdown(markdown_resume_text)
