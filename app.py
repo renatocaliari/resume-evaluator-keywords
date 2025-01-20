@@ -239,12 +239,12 @@ class RecommendationGenerator(Workflow):
             }
             sorted_keywords_response: RunResponse = self.prioritizer.run(json.dumps(prioritizer_input, indent=4))
             logger_manager.log("✅ Sorting the keywords...DONE")
-            logger_manager.log(f"✅ Sorted:...{sorted_keywords_response.content}")
+            # logger_manager.log(f"✅ Sorted:...{sorted_keywords_response.content}")
 
-            # if sorted_keywords_response.content and sorted_keywords_response.content.keywords:
-            #     sorted_keywords = sorted_keywords_response.content
-            # else:
-            sorted_keywords = []
+            if sorted_keywords_response.content and sorted_keywords_response.content.keywords:
+                sorted_keywords = sorted_keywords_response.content
+            else:
+                sorted_keywords = ListKeywordsFrequency(keywords=[])
 
             if "cached_profession" not in self.session_state:
                 self.session_state["cached_profession"] = []
