@@ -428,6 +428,11 @@ if st.session_state.get('run_evaluation', False):
         markdown_recommendation_text=agent_recommendation.content["recommendation"].content
         markdown_resume_text=agent_recommendation.content["improved_resume"].content
 
+        with st.expander("See the reasoning and alternatives for each section", expanded=False):
+            st.markdown(f"""
+                    {markdown_recommendation_text}
+            """)
+
         with st.expander("Copy the raw result", expanded=False):
             st.markdown(f"""
                     {markdown_resume_text}
