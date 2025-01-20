@@ -317,7 +317,7 @@ with st.sidebar:
     MODEL_GEMINI: Gemini = Gemini(id="gemini-2.0-flash-exp", api_key=api_key)
 
     profession = st.text_input("For which profession do you want to refine your resume?", key="profession_input")
-    qty = st.number_input = st.number_input("Max vacancies to search in each platform", min_value=1, max_value=10, value=5, step=1)
+    qty = st.number_input("Max vacancies to search in each platform", min_value=1, max_value=10, value=5, step=1)
     
     curriculo_pdf = st.file_uploader("Upload your resume in PDF format", type=["pdf"], key="curriculo_pdf_input")
     curriculo_file_name = ""
