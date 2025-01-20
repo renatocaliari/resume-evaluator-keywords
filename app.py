@@ -448,6 +448,7 @@ if st.session_state.get('run_evaluation', False):
         pdf.save(pdf_file_name)
 
         with open(pdf_file_name, 'rb') as f:
-           st.download_button('Download the new resume (your )', f, file_name=pdf_file_name, type="primary", icon="⬇️") 
+           st.download_button('Download the new resume (the screen will be reloaded)', f, file_name=pdf_file_name, type="primary", icon="⬇️") 
+
 
         st.markdown(markdown_resume_text)
