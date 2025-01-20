@@ -159,7 +159,7 @@ class RecommendationGenerator(Workflow):
                     "Always use this topics evaluation: Current Info, Detailed Reasoning (mentioning keywords), Suggested Text - Alternative 1, Suggested Text - Alternative 2",
                     "You don't need to explain the evaluation structure to the user.",
                     "Your result should always be in the same language of the resume"], 
-                    expected_output="The result should be in a beautiful structured content in Markdown but without the marks ```markdown.",
+                    expected_output="The result should be in a beautiful structured content in Markdown but without starting with the marks ```markdown or other marks",
                     markdown=True)
 
     improved_resume: Agent = Agent(model=MODEL_GEMINI,
@@ -167,7 +167,7 @@ class RecommendationGenerator(Workflow):
                 instructions=["Given the recommended alternatives, integrate the best nuances and give a final improved resume so the person could share it as it is.",
                     "Do not change the name of the person and do not fabric the middle or last name.",
                     "Your result should always be in the same language of the resume"], 
-                    expected_output="The result should be in a beautiful structured resume in Markdown but without the marks ```markdown.",
+                    expected_output="The result should be in a beautiful structured resume in Markdown but without starting with the marks ```markdown or other marks",
                     markdown=True)
 
     def run(self, profession: str, curriculum_vitae_file_name: str, curriculum_vitae_content: str, link_job_offer: str = None, qty: int = 1, use_cache: bool = True) -> RunResponse:
@@ -335,8 +335,9 @@ with st.sidebar:
     
 
     # Checkbox to force new job search
-    search_new_jobs = st.checkbox("Use cached keywords", value=True, 
-        help="If checked, use the cached keywords from job board vacancies instead of searching again. If you're conducting an evaluation for this profession for the first time, a new search will be carried out.",)
+    search_new_jobs = True 
+    # st.checkbox("Use cached keywords", value=True, 
+        # help="If checked, use the cached keywords from job board vacancies instead of searching again. If you're conducting an evaluation for this profession for the first time, a new search will be carried out.",)
     
     # Check if both required fields are filled
     is_button_disabled = not (profession and curriculo_pdf)
@@ -429,7 +430,6 @@ if st.session_state.get('run_evaluation', False):
 
         with st.expander("Copy the raw result", expanded=False):
             st.markdown(f"""
-                    ````markdown
                     {markdown_resume_text}
             """)
 
