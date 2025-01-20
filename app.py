@@ -165,6 +165,7 @@ class RecommendationGenerator(Workflow):
     improved_resume: Agent = Agent(model=MODEL_GEMINI,
                 description="You are a famous HR analyst. You are very good at suggesting improvements to resumes based on a list of keywords and best practices for resume writing.",
                 instructions=["Given the recommended alternatives, integrate the best nuances and give a final improved resume so the person could share it as it is.",
+                    "Do not change the name of the person and do not fabric the middle or last name.",
                     "Your result should always be in the same language of the resume"], 
                     expected_output="The result should be in a beautiful structured resume in Markdown but without the marks ```markdown.",
                     markdown=True)
@@ -287,6 +288,7 @@ class RecommendationGenerator(Workflow):
         
         logger_manager.log("✍️ Generating improved resume")
         improved_resume_input = {
+            "curriculum_vitae_content": curriculum_vitae_content,
             "recommendation": recommendation.content
         }
         improved_resume: RunResponse = self.improved_resume.run(json.dumps(improved_resume_input, indent=4), stream=False, markdown=True)
@@ -432,7 +434,7 @@ if st.session_state.get('run_evaluation', False):
             """)
 
         pdf = MarkdownPdf(toc_level=0)
-        pdf.add_section(Section(markdown_resume_text, paper_size="A4-L"))
+        pdf.add_section(Section(markdown_resume_text, paper_size="A4"))
         pdf.meta["title"] = f"Resume - {profession}"
         
         timestamp = str(int(time.time()))
