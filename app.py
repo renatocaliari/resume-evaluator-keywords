@@ -1,10 +1,12 @@
 import requests
+import time
 
 from pydantic import BaseModel, Field
 from typing import Optional, Iterator, Callable
 
 import streamlit as st
 from pypdf import PdfReader
+from markdown_pdf import MarkdownPdf, Section
 
 from phi.workflow import Workflow, RunResponse, RunEvent
 
@@ -70,7 +72,7 @@ class SpecificJobOffer(BaseModel):
     keywords: list[str] = Field(..., description="List of Keywords. It can contains repated keywords.")
 
 
-def get_latest_jobs_for_profession(profession: str):
+def get_latest_jobs_for_profession(profession: str, qty: int = 1):
     """
     This function searches for the latest job offers for a specific profession.
 
@@ -89,7 +91,7 @@ def get_latest_jobs_for_profession(profession: str):
         site_name=sites,
         search_term=profession,
         location="",
-        results_wanted=10, 
+        results_wanted=qty, 
         hours_old=168
     )
 
@@ -160,7 +162,14 @@ class RecommendationGenerator(Workflow):
                     expected_output="The result should be in a beautiful structured content in Markdown but without the marks ```markdown.",
                     markdown=True)
 
-    def run(self, profession: str, curriculum_vitae_file_name: str, curriculum_vitae_content: str, link_job_offer: str = None, use_cache: bool = True) -> RunResponse:
+    final_recommender: Agent = Agent(model=MODEL_GEMINI,
+                description="You are a famous HR analyst. You are very good at suggesting improvements to resumes based on a list of keywords and best practices for resume writing.",
+                instructions=["Given the recommended alternatives, integrate the best nuances and give a final improved resume so the person could share it as it is.",
+                    "Your result should always be in the same language of the resume"], 
+                    expected_output="The result should be in a beautiful structured resume in Markdown but without the marks ```markdown.",
+                    markdown=True)
+
+    def run(self, profession: str, curriculum_vitae_file_name: str, curriculum_vitae_content: str, link_job_offer: str = None, qty: int = 1, use_cache: bool = True) -> RunResponse:
         logger_manager.log(f"🚀 Getting the last job offers and generating recommendations: {profession}")
         sorted_keywords = None
 
@@ -183,7 +192,7 @@ class RecommendationGenerator(Workflow):
                     num_tries += 1
 
                     logger_manager.log(f"🚀 Searching job offers for {profession}")
-                    jobs = get_latest_jobs_for_profession(profession)
+                    jobs = get_latest_jobs_for_profession(profession, qty=qty)
                     searcher_response = RunResponse(content=jobs)
 
                     if searcher_response and searcher_response.content:
@@ -230,11 +239,12 @@ class RecommendationGenerator(Workflow):
             }
             sorted_keywords_response: RunResponse = self.prioritizer.run(json.dumps(prioritizer_input, indent=4))
             logger_manager.log("✅ Sorting the keywords...DONE")
+            logger_manager.log(f"✅ Sorted:...{sorted_keywords_response.content}")
 
-            if sorted_keywords_response.content and sorted_keywords_response.content.keywords:
-                sorted_keywords = sorted_keywords_response.content
-            else:
-                sorted_keywords = []
+            # if sorted_keywords_response.content and sorted_keywords_response.content.keywords:
+            #     sorted_keywords = sorted_keywords_response.content
+            # else:
+            sorted_keywords = []
 
             if "cached_profession" not in self.session_state:
                 self.session_state["cached_profession"] = []
@@ -261,7 +271,7 @@ class RecommendationGenerator(Workflow):
             if specific_job_offer_response.content and specific_job_offer_response.content.keywords:
                 specific_job_offer = specific_job_offer_response.content
         
-        # Step 5: Generating recommendation
+        # Step 5: Exploring improvements
         logger_manager.log("✍️ Generating recommendation")
         keywords = sorted_keywords.get('keywords', []) if isinstance(sorted_keywords, dict) else [v.model_dump() for v in sorted_keywords.keywords]
         recommender_input = {
@@ -271,12 +281,19 @@ class RecommendationGenerator(Workflow):
             "profession": profession,
             "keywords_frequency": keywords
         }
-
-        # Run the writer and yield the response
         recommendation: RunResponse = self.recommender.run(json.dumps(recommender_input, indent=4), stream=False, markdown=True)
+        
+        # Step 6: Generating Improved Resume
+        
+        logger_manager.log("✍️ Generating improved resume")
+        recommender_input = {
+            "recommendation": recommendation.content
+        }
+        improved_resume: RunResponse = self.improved_resume.run(json.dumps(recommender_input, indent=4), stream=False, markdown=True)
+        
         logger_manager.log("✅ Generating recommendation: DONE")
         # return recommendation
-        result = RunResponse(content={"recommendation": recommendation, "keywords_frequency": keywords, "specific_job_offer": specific_job_offer})
+        result = RunResponse(content={"recommendation": recommendation, "improved_resume": improved_resume, "keywords_frequency": keywords, "specific_job_offer": specific_job_offer})
         return result
 
 st.title("Resume Evaluator")
@@ -300,10 +317,13 @@ with st.sidebar:
     MODEL_GEMINI: Gemini = Gemini(id="gemini-2.0-flash-exp", api_key=api_key)
 
     profession = st.text_input("For which profession do you want to refine your resume?", key="profession_input")
+    qty = st.number_input = st.number_input("Max vacancies to search in each platform", min_value=1, max_value=10, value=5, step=1)
+    
     curriculo_pdf = st.file_uploader("Upload your resume in PDF format", type=["pdf"], key="curriculo_pdf_input")
     curriculo_file_name = ""
     curriculo_conteudo = ""
     
+
 
     pdf_status_placeholder = st.empty()
 
@@ -388,6 +408,7 @@ if st.session_state.get('run_evaluation', False):
             curriculum_vitae_file_name=curriculo_file_name,
             curriculum_vitae_content=curriculo_conteudo,
             link_job_offer=link_job_offer,
+            qty=qty,
             use_cache=not search_new_jobs
         )
 
@@ -403,12 +424,24 @@ if st.session_state.get('run_evaluation', False):
             with st.expander(f"Keywords from the {company}: {title}", expanded=False):
                 st.markdown(keywords)
 
-        markdown_text=agent_recommendation.content["recommendation"].content
+        markdown_recommendation_text=agent_recommendation.content["recommendation"].content
+        markdown_resume_text=agent_recommendation.content["improved_resume"].content
 
         with st.expander("Copy the raw result", expanded=False):
             st.markdown(f"""
                     ````markdown
-                    {markdown_text}
+                    {markdown_resume_text}
             """)
 
-        st.markdown(markdown_text)
+        pdf = MarkdownPdf(toc_level=0)
+        pdf.add_section(Section(markdown_resume_text), paper_size="A4-L")
+        pdf.meta["title"] = f"Resume - {profession}"
+        
+        timestamp = str(int(time.time()))
+        pdf_file_name = f"resume_{profession}_{timestamp}.pdf"
+        pdf.save(pdf_file_name)
+
+        with open(pdf_file_name, 'rb') as f:
+           st.download_button('Download the new resume', f, file_name=pdf_file_name) 
+
+        st.markdown(markdown_resume_text)

@@ -11,3 +11,4 @@ groq
 huggingface_hub
 mistralai
 jina
+markdown-pdf
