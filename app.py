@@ -145,7 +145,8 @@ class RecommendationGenerator(Workflow):
             description=f"You excel at evaluating keywords and the frequency with which they occur. You are accurate and do not fabricate data.",
             instructions=[f"Evaluate the list of keywords and tell me the frequency of each one",
                           "Sort the keywords by the frequency in descending order",
-                          "The result should be in the response model format."],
+                          "The result should be in the json response model format.", 
+                          "Ensure each keyword has exactly these two fields: 'keyword' and 'frequency'"],
             response_model=ListKeywordsFrequency, markdown=True)
 
     recommender: Agent = Agent(model=MODEL_GEMINI,
@@ -239,13 +240,35 @@ class RecommendationGenerator(Workflow):
                 "keywords": all_keywords
             }
             sorted_keywords_response: RunResponse = self.prioritizer.run(json.dumps(prioritizer_input, indent=4))
+            logger_manager.log(f"Raw response from prioritizer: {sorted_keywords_response.content}")
+
+            # Tentar fazer o parse e logar qualquer erro
+            try:
+                if isinstance(sorted_keywords_response.content, str):
+                    parsed_content = ListKeywordsFrequency.model_validate_json(sorted_keywords_response.content)
+                elif isinstance(sorted_keywords_response.content, dict):
+                    parsed_content = ListKeywordsFrequency.model_validate(sorted_keywords_response.content)
+                else:
+                    parsed_content = sorted_keywords_response.content
+                logger_manager.log(f"Parsed content: {parsed_content}")
+            except Exception as e:
+                logger_manager.log(f"Error parsing content: {e}")
+                parsed_content = ListKeywordsFrequency(keywords=[])
             logger_manager.log("✅ Sorting the keywords...DONE")
             # logger_manager.log(f"✅ Sorted:...{sorted_keywords_response.content}")
 
-            if sorted_keywords_response.content and sorted_keywords_response.content.keywords:
-                sorted_keywords = sorted_keywords_response.content
+            # Add proper validation for the response content
+            if hasattr(sorted_keywords_response, 'content'):
+                if isinstance(sorted_keywords_response.content, ListKeywordsFrequency):
+                    sorted_keywords = sorted_keywords_response.content
+                else:
+                    # Try to parse the content if it's not already in the correct format
+                    try:
+                        sorted_keywords = ListKeywordsFrequency.model_validate_json(sorted_keywords_response.content)
+                    except:
+                        sorted_keywords = ListKeywordsFrequency(keywords=[])
             else:
-                sorted_keywords = ListKeywordsFrequency(keywords=[])
+                sorted_keywords = ListKeywordsFrequency(keywords=[])  # Default to empty list if no content
 
             if "cached_profession" not in self.session_state:
                 self.session_state["cached_profession"] = []
